@@ -30,4 +30,6 @@ Devise.setup do |config|
   end
 
   Rails.application.config.session_store :disabled
+
+  config.skip_session_storage = [:http_auth, :jwt]
 end
