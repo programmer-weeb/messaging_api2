@@ -26,7 +26,7 @@ Devise.setup do |config|
   config.responder.redirect_status = :see_other
 
   config.jwt do |jwt|
-    jwt.secret = Rails.application.credentials.devise_jwt_secret_key! || "12bc329a5d733d35e5d2dd9f3fbecb86e9f874e9e5c66bc57bb551c876e5f1d35fa9a9f2208be5dd5a0056cf75fa27f75df92aef8266d272308d987201b532db"
+    jwt.secret = Rails.application.credentials.devise_jwt_secret_key || "12bc329a5d733d35e5d2dd9f3fbecb86e9f874e9e5c66bc57bb551c876e5f1d35fa9a9f2208be5dd5a0056cf75fa27f75df92aef8266d272308d987201b532db"
   end
 
   Rails.application.config.session_store :disabled
