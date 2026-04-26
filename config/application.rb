@@ -29,5 +29,9 @@ module MessagingApi2
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
     Rails.application.config.session_store :disabled
+
+    config.middleware.delete ActionDispatch::Session::CookieStore
+    config.middleware.delete ActionDispatch::Cookies
+    config.middleware.delete ActionDispatch::Flash
   end
 end
