@@ -11,6 +11,10 @@ Rails.application.routes.draw do
              },
              defaults: { format: :json }
 
+  devise_scope :user do
+    post "auth/google", to: "users/google_sessions#create", defaults: { format: :json }
+  end
+
   get :me, to: "users#me", defaults: { format: :json }
 
   resources :users, only: [ :index, :show ], defaults: { format: :json }
