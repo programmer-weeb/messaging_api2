@@ -1,0 +1,9 @@
+pending_request:
+  requester: one
+  addressee: two
+  status: pending
+
+accepted_request:
+  requester: two
+  addressee: three
+  status: accepted

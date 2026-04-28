@@ -1,0 +1,9 @@
+one:
+  sender: one
+  recipient: two
+  body: Hello from one to two
+
+two:
+  sender: two
+  recipient: one
+  body: Reply from two to one
