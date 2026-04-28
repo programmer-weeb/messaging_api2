@@ -3,8 +3,7 @@ class UsersController < ApplicationController
   before_action :set_user, only: :show
 
   def index
-    users = User.where.not(id: current_user.id).order(:email)
-    users = users.where("email ILIKE ?", "%#{params[:q]}%") if params[:q].present?
+    users = Users::DirectoryService.new(current_user: current_user, query: params[:q]).call
 
     render json: { users: users.map { |user| user_payload(user) } }, status: :ok
   end

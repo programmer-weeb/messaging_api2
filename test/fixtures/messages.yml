@@ -2,8 +2,12 @@ one:
   sender: one
   recipient: two
   body: Hello from one to two
+  created_at: <%= 2.days.ago %>
+  updated_at: <%= 2.days.ago %>
 
 two:
   sender: two
   recipient: one
   body: Reply from two to one
+  created_at: <%= 1.day.ago %>
+  updated_at: <%= 1.day.ago %>
