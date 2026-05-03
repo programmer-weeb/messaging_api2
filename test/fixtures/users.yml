@@ -12,4 +12,9 @@ three:
   email: three@example.com
   encrypted_password: <%= Devise::Encryptor.digest(User, "password123") %>
   confirmed_at: <%= Time.current %>
+
+four:
+  email: four@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, "password123") %>
+  confirmed_at: <%= Time.current %>
 # column: value

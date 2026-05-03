@@ -15,11 +15,11 @@ module Friendships
     end
 
     test "creates friendship from current user" do
-      friendship = @service.create_friendship(addressee_id: users(:one).id)
+      friendship = @service.create_friendship(addressee_id: users(:four).id)
 
       assert friendship.persisted?
       assert_equal users(:two), friendship.requester
-      assert_equal users(:one), friendship.addressee
+      assert_equal users(:four), friendship.addressee
       assert_equal "pending", friendship.status
     end
 

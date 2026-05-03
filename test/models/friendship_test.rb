@@ -16,6 +16,17 @@ class FriendshipTest < ActiveSupport::TestCase
     )
 
     assert_not friendship.valid?
-    assert_includes friendship.errors[:requester_id], "has already been taken"
+    assert_includes friendship.errors[:base], "friendship already exists between these users"
+  end
+
+  test "reverse pair is rejected" do
+    friendship = Friendship.new(
+      requester: users(:two),
+      addressee: users(:one),
+      status: :pending
+    )
+
+    assert_not friendship.valid?
+    assert_includes friendship.errors[:base], "friendship already exists between these users"
   end
 end
