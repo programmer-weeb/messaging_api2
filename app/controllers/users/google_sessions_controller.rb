@@ -9,7 +9,7 @@ class Users::GoogleSessionsController < DeviseController
 
     render json: {
       message: "Signed in with Google.",
-      user: user
+      user: user_payload(user)
     }, status: :ok
   rescue ActionController::ParameterMissing
     render json: {
@@ -27,5 +27,14 @@ class Users::GoogleSessionsController < DeviseController
 
   def google_params
     params.permit(:id_token)
+  end
+
+  def user_payload(user)
+    {
+      id: user.id,
+      email: user.email,
+      created_at: user.created_at,
+      updated_at: user.updated_at
+    }
   end
 end
