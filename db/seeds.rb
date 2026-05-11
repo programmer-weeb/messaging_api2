@@ -56,66 +56,77 @@ def in_batches(records, size: 1_000)
   records.each_slice(size) { |slice| yield slice }
 end
 
+def friendship_status
+  roll = rand
+  return Friendship.statuses[:accepted] if roll < 0.65
+  return Friendship.statuses[:pending] if roll < 0.95
+
+  Friendship.statuses[:blocked]
+end
+
 users = []
+friendship_rows = []
+message_rows = []
 
 ActiveRecord::Base.transaction do
   USER_COUNT.times do |index|
     email = seed_email(index)
     user = User.find_or_initialize_by(email: email)
-    user.password = SEED_PASSWORD
-    user.password_confirmation = SEED_PASSWORD
-    user.save! if user.new_record? || user.changed?
+    if user.new_record?
+      user.password = SEED_PASSWORD
+      user.password_confirmation = SEED_PASSWORD
+      user.save!
+    end
     users << user
   end
+
+  seed_user_ids = users.map(&:id)
+
+  Message.where(sender_id: seed_user_ids, recipient_id: seed_user_ids).delete_all
+  Friendship.where(requester_id: seed_user_ids, addressee_id: seed_user_ids).delete_all
+
+  all_pairs = users.combination(2).to_a
+  raise "Not enough distinct user pairs for requested friendships." if FRIENDSHIP_COUNT > all_pairs.size
+
+  friendship_pairs = all_pairs.sample(FRIENDSHIP_COUNT)
+  friendship_rows = friendship_pairs.map do |left_user, right_user|
+    requester, addressee = [ [ left_user, right_user ], [ right_user, left_user ] ].sample
+    created_at = timestamp_between(from: 9.months.ago, to: 2.weeks.ago)
+    updated_at = timestamp_between(from: created_at, to: Time.current)
+
+    {
+      requester_id: requester.id,
+      addressee_id: addressee.id,
+      status: friendship_status,
+      created_at: created_at,
+      updated_at: updated_at
+    }
+  end
+
+  in_batches(friendship_rows) { |slice| Friendship.insert_all!(slice) }
+
+  accepted_pair_ids = Friendship
+    .accepted
+    .where(requester_id: seed_user_ids, addressee_id: seed_user_ids)
+    .pluck(:requester_id, :addressee_id)
+  accepted_pairs = accepted_pair_ids.flat_map { |requester_id, addressee_id| [ [ requester_id, addressee_id ], [ addressee_id, requester_id ] ] }
+  message_pairs = accepted_pairs.presence || friendship_rows.flat_map { |row| [ [ row[:requester_id], row[:addressee_id] ], [ row[:addressee_id], row[:requester_id] ] ] }
+
+  message_rows = Array.new(MESSAGE_COUNT) do |index|
+    sender_id, recipient_id = message_pairs.sample
+    created_at = timestamp_between(from: 6.months.ago, to: Time.current)
+
+    {
+      sender_id: sender_id,
+      recipient_id: recipient_id,
+      body: message_body(index + 1),
+      created_at: created_at,
+      updated_at: created_at
+    }
+  end
+
+  in_batches(message_rows) { |slice| Message.insert_all!(slice) }
 end
-
-seed_user_ids = users.map(&:id)
-
-Message.where(sender_id: seed_user_ids, recipient_id: seed_user_ids).delete_all
-Friendship.where(requester_id: seed_user_ids, addressee_id: seed_user_ids).delete_all
-
-all_pairs = users.combination(2).to_a
-raise "Not enough distinct user pairs for requested friendships." if FRIENDSHIP_COUNT > all_pairs.size
-
-friendship_pairs = all_pairs.sample(FRIENDSHIP_COUNT)
-friendship_rows = friendship_pairs.map do |left_user, right_user|
-  requester, addressee = [ [ left_user, right_user ], [ right_user, left_user ] ].sample
-  created_at = timestamp_between(from: 9.months.ago, to: 2.weeks.ago)
-  updated_at = timestamp_between(from: created_at, to: Time.current)
-  status = rand < 0.65 ? Friendship.statuses[:accepted] : (rand < 0.85 ? Friendship.statuses[:pending] : Friendship.statuses[:blocked])
-
-  {
-    requester_id: requester.id,
-    addressee_id: addressee.id,
-    status: status,
-    created_at: created_at,
-    updated_at: updated_at
-  }
-end
-
-in_batches(friendship_rows) { |slice| Friendship.insert_all!(slice) }
-
-accepted_pair_ids = Friendship
-  .accepted
-  .where(requester_id: seed_user_ids, addressee_id: seed_user_ids)
-  .pluck(:requester_id, :addressee_id)
-accepted_pairs = accepted_pair_ids.flat_map { |requester_id, addressee_id| [ [ requester_id, addressee_id ], [ addressee_id, requester_id ] ] }
-message_pairs = accepted_pairs.presence || friendship_rows.flat_map { |row| [ [ row[:requester_id], row[:addressee_id] ], [ row[:addressee_id], row[:requester_id] ] ] }
-
-message_rows = Array.new(MESSAGE_COUNT) do |index|
-  sender_id, recipient_id = message_pairs.sample
-  created_at = timestamp_between(from: 6.months.ago, to: Time.current)
-
-  {
-    sender_id: sender_id,
-    recipient_id: recipient_id,
-    body: message_body(index + 1),
-    created_at: created_at,
-    updated_at: created_at
-  }
-end
-
-in_batches(message_rows) { |slice| Message.insert_all!(slice) }
 
 puts <<~SUMMARY
   Seed complete.
